@@ -4,8 +4,8 @@ export { default as PasswordReset } from './src/components/Auth/PasswordReset';
 export { default as PasswordChange } from './src/components/Auth/PasswordChange';
 
 // Layout Components
-export { default as Header } from './src/components/Layout/Header';
-export { default as Sidebar } from './src/components/Layout/Sidebar';
+export { Header } from './src/components/Layout/Header';
+export { Sidebar, type MenuItem } from './src/components/Layout/Sidebar';
 
 // Contexts
 export * from './src/contexts/AppContext';

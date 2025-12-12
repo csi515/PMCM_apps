@@ -14,7 +14,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 
-interface MenuItem {
+export interface MenuItem {
   title: string;
   path?: string;
   icon?: typeof LayoutDashboard;
@@ -22,7 +22,7 @@ interface MenuItem {
   children?: MenuItem[];
 }
 
-const menuItems: MenuItem[] = [
+const defaultMenuItems: MenuItem[] = [
   {
     title: '대시보드',
     path: '/dashboard',
@@ -178,11 +178,13 @@ const menuItems: MenuItem[] = [
 
 export interface SidebarProps {
   appName?: string;
+  menuItems?: MenuItem[];
 }
 
-export function Sidebar({ appName }: SidebarProps) {
+export function Sidebar({ appName, menuItems }: SidebarProps) {
   const location = useLocation();
   const { currentUser } = useApp();
+  const itemsToRender = menuItems || defaultMenuItems;
 
   const isActive = (path?: string) => path && location.pathname === path;
 
@@ -236,13 +238,13 @@ export function Sidebar({ appName }: SidebarProps) {
           <LayoutDashboard className="w-6 h-6 text-white" />
         </div>
         <div>
-          <h2 className="text-lg font-bold text-neutral-900 font-display tracking-tight leading-tight">CQT-MES</h2>
+          <h2 className="text-lg font-bold text-neutral-900 font-display tracking-tight leading-tight">{appName || 'CQT-MES'}</h2>
           <p className="text-[10px] uppercase tracking-wider font-semibold text-primary-600">Enterprise Edition</p>
         </div>
       </div>
 
       <nav className="flex-1 overflow-y-auto p-4 space-y-1 scrollbar-hide">
-        {menuItems.map((item) => renderMenuItem(item))}
+        {itemsToRender.map((item) => renderMenuItem(item))}
       </nav>
 
       <div className="p-4 border-t border-neutral-50 bg-neutral-50/50">
