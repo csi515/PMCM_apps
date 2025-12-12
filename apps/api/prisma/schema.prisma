@@ -1,0 +1,382 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ------------------------------------------------------
+// SYS Plugin (System & Auth)
+// ------------------------------------------------------
+
+enum Role {
+  USER
+  MANAGER
+  ADMIN
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique // Employee ID
+  password  String
+  name      String
+  deptCode  String
+  birthDate String?  // For initial password reset logic
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  gtmTasks  GtmTask[] @relation("Assignee")
+  rndLogs   RndEquipmentUsageLog[]
+  managedEquipments RndEquipment[] @relation("EquipmentManager")
+
+  @@map("SYS_Users")
+}
+
+// ------------------------------------------------------
+// GTM Plugin (General Task Management)
+// ------------------------------------------------------
+
+model GtmStrategicGoal {
+  id          String   @id @default(uuid()) @map("goal_id")
+  title       String
+  titleJa     String?  @map("title_ja")
+  year        Int
+  category    String
+  targetValue Decimal  @map("target_value") @db.Decimal(10, 2)
+  currentValue Decimal @default(0) @map("current_value") @db.Decimal(10, 2)
+  
+  // Standard Audit Fields
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt      @map("updated_at")
+  createdBy   Int?     @map("created_by") // Should ideally be UUID if User ID becomes UUID, currently Int in SYS
+  updatedBy   Int?     @map("updated_by")
+  isDeleted   Boolean  @default(false) @map("is_deleted")
+
+  projects    GtmProject[]
+
+  @@map("GTM_STRATEGIC_GOALS")
+}
+
+model GtmProject {
+  id            String   @id @default(uuid()) @map("project_id")
+  deptId        String   @map("dept_id") // Core FK
+  goalId        String   @map("goal_id")
+  projectName   String   @map("project_name")
+  projectNameJa String?  @map("project_name_ja")
+  description   String?
+  descriptionJa String?  @map("description_ja")
+  status        String   
+  startDate     DateTime @map("start_date")
+  endDate       DateTime @map("end_date")
+  baselineStart DateTime @map("baseline_start")
+  baselineEnd   DateTime @map("baseline_end")
+  isPrivate     Boolean  @default(false) @map("is_private")
+
+  // Standard Audit Fields
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt      @map("updated_at")
+  createdBy   Int?     @map("created_by")
+  updatedBy   Int?     @map("updated_by")
+  isDeleted   Boolean  @default(false) @map("is_deleted")
+  
+  goal        GtmStrategicGoal @relation(fields: [goalId], references: [id])
+  tasks       GtmTask[]
+
+  @@map("GTM_PROJECTS")
+}
+
+model GtmTask {
+  id            String   @id @default(uuid()) @map("task_id")
+  projectId     String   @map("project_id")
+  deptId        String   @map("dept_id")
+  parentTaskId  String?  @map("parent_task_id")
+  assigneeId    Int?     @map("assignee_id") // User is Int
+  taskName      String   @map("task_name")
+  taskNameJa    String?  @map("task_name_ja")
+  progress      Decimal  @default(0) @db.Decimal(5, 2)
+  weight        Decimal  @default(1) @db.Decimal(5, 2)
+  dependencyIds Json?    @map("dependency_ids") // JSONB
+  status        String 
+  startDate     DateTime @map("start_date")
+  endDate       DateTime @map("end_date")
+
+  // Standard Audit Fields
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt      @map("updated_at")
+  createdBy   Int?     @map("created_by")
+  updatedBy   Int?     @map("updated_by")
+  isDeleted   Boolean  @default(false) @map("is_deleted")
+  
+  project       GtmProject @relation(fields: [projectId], references: [id])
+  parentTask    GtmTask?   @relation("SubTasks", fields: [parentTaskId], references: [id])
+  subTasks      GtmTask[]  @relation("SubTasks")
+  assignee      User?      @relation("Assignee", fields: [assigneeId], references: [id])
+  attachments   GtmTaskAttachment[]
+
+  @@map("GTM_TASKS")
+}
+
+model GtmWeeklyReport {
+  id            String   @id @default(uuid()) @map("report_id")
+  userId        Int      @map("user_id")
+  deptId        String   @map("dept_id")
+  year          Int
+  weekNumber    Int      @map("week_number")
+  achievements  String?  @db.Text
+  achievementsJa String? @map("achievements_ja") @db.Text
+  plans         String?  @db.Text
+  plansJa       String?  @map("plans_ja") @db.Text
+  issues        String?  @db.Text
+  issuesJa      String?  @map("issues_ja") @db.Text
+  status        String   @default("DRAFT")
+  mgrComment    String?  @map("mgr_comment") @db.Text
+
+  // Standard Audit Fields
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt      @map("updated_at")
+  createdBy   Int?     @map("created_by")
+  updatedBy   Int?     @map("updated_by")
+  isDeleted   Boolean  @default(false) @map("is_deleted")
+
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@map("GTM_WEEKLY_REPORTS")
+}
+
+model GtmTaskAttachment {
+  id          String   @id @default(uuid()) @map("attach_id")
+  taskId      String   @map("task_id")
+  ecmLink     String   @map("ecm_link")
+  fileName    String   @map("file_name")
+  fileSize    BigInt   @map("file_size")
+
+  // Standard Audit Fields
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt      @map("updated_at")
+  createdBy   Int?     @map("created_by")
+  updatedBy   Int?     @map("updated_by")
+  isDeleted   Boolean  @default(false) @map("is_deleted")
+
+  task        GtmTask  @relation(fields: [taskId], references: [id])
+
+  @@map("GTM_TASK_ATTACHMENTS")
+}
+
+// ------------------------------------------------------
+// QMS Plugin (Quality Management System)
+// ------------------------------------------------------
+
+model QmsIssue {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  status      String   @default("OPEN")
+  pdcaStep    String   @default("PLAN") // PLAN, DO, CHECK, ACT
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("QMS_Issues")
+}
+
+// ------------------------------------------------------
+// RND Plugin (Research & Development)
+// ------------------------------------------------------
+
+model RndEquipment {
+  id          Int      @id @default(autoincrement())
+  assetNumber String?  @unique @map("asset_number")
+  name        String
+  modelName   String?  @map("model_name")
+  manufacturer String?
+  location    String?
+  managerId   Int?     @map("manager_id")
+  manualUrl   String?  @map("manual_url")
+  status      String   @default("AVAILABLE") // AVAILABLE, IN_USE, MAINTENANCE, RESERVED
+  
+  lastCalibrationDate DateTime? @map("last_calibration_date")
+  nextCalibrationDate DateTime? @map("next_calibration_date")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt      @map("updated_at")
+  
+  logs        RndEquipmentUsageLog[]
+  manager     User?    @relation("EquipmentManager", fields: [managerId], references: [id])
+
+  @@map("RND_Equipments")
+}
+
+model RndEquipmentUsageLog {
+  id          Int      @id @default(autoincrement())
+  equipmentId Int
+  userId      Int
+  startTime   DateTime // Reservation start
+  endTime     DateTime? // Reservation end
+  actualStart DateTime?
+  actualEnd   DateTime?
+  note        String?
+
+  equipment   RndEquipment @relation(fields: [equipmentId], references: [id])
+  user        User         @relation(fields: [userId], references: [id])
+
+  @@map("RND_EquipmentUsageLogs")
+}
+
+model RndInventory {
+  id          Int      @id @default(autoincrement())
+  name        String
+  casNo       String?  @map("cas_no")
+  location    String?
+  safetyStock Decimal  @default(0) @map("safety_stock") @db.Decimal(10, 4)
+  currentStock Decimal @default(0) @map("current_stock") @db.Decimal(10, 4)
+  unit        String   @default("EA")
+  isHazardous Boolean  @default(false) @map("is_hazardous")
+  msdsUrl     String?  @map("msds_url")
+  
+  logs        RndInventoryLog[]
+  hazardousLogs RndHazardousLog[]
+
+  @@map("RND_Inventories")
+}
+
+model RndInventoryLog {
+  id          Int      @id @default(autoincrement())
+  inventoryId Int
+  type        String   // IN, OUT
+  amount      Float
+  createdAt   DateTime @default(now())
+
+  inventory   RndInventory @relation(fields: [inventoryId], references: [id])
+
+  @@map("RND_InventoryLogs")
+}
+
+model RndSafetyDoc {
+  id            Int      @id @default(autoincrement())
+  title         String
+  docType       String   // RISK_ASSESSMENT, WORK_STANDARD
+  fileUrl       String?
+  lastUpdated   DateTime
+  nextUpdateDue DateTime
+  
+  department    String?
+  managerId     Int?
+  sopVersion    String?
+  
+  manager       User?    @relation(fields: [managerId], references: [id])
+
+  @@map("RND_SafetyDocs")
+}
+
+model RndProject {
+  id              String   @id @default(uuid()) @map("project_id")
+  name            String
+  type            String   // GENERAL, NATIONAL
+  status          String   // PLANNED, ACTIVE, COMPLETED, ON_HOLD, DROPPED
+  
+  // Charter Fields
+  background      String?  @db.Text
+  problemStatement String? @map("problem_statement") @db.Text
+  objectives      String?  @db.Text
+  methodology     String?  @db.Text
+  expectedEffects String?  @map("expected_effects") @db.Text
+  
+  // Management Fields
+  startDate       DateTime @map("start_date")
+  endDate         DateTime @map("end_date")
+  budget          Decimal  @default(0) @db.Decimal(15, 2)
+  healthStatus    String   @default("GREEN") // RED, YELLOW, GREEN
+  
+  // Standard Audit Fields
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt      @map("updated_at")
+  createdBy       Int?     @map("created_by")
+  updatedBy       Int?     @map("updated_by")
+  isDeleted       Boolean  @default(false) @map("is_deleted")
+
+  compliance      RndComplianceChecklist[]
+  analysisRequests RndAnalysisRequest[]
+
+  @@map("RND_PROJECTS")
+}
+
+model RndHazardousLog {
+  id              Int      @id @default(autoincrement())
+  inventoryId     Int      @map("inventory_id")
+  userId          Int      @map("user_id")
+  usageDate       DateTime @map("usage_date")
+  processName     String   @map("process_name")
+  place           String?
+  amountUsed      Decimal  @map("amount_used") @db.Decimal(10, 4)
+  currentStock    Decimal  @map("current_stock") @db.Decimal(10, 4)
+  ventilationOn   Boolean  @default(false) @map("ventilation_on")
+  ppeChecked      Boolean  @default(false) @map("ppe_checked")
+  signature       String?  // Digital signature string or ID
+
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  inventory       RndInventory @relation(fields: [inventoryId], references: [id])
+  user            User         @relation(fields: [userId], references: [id])
+
+  @@map("RND_HAZARDOUS_LOGS")
+}
+
+model RndIP {
+  id              Int      @id @default(autoincrement())
+  managementNo    String   @unique @map("management_no")
+  title           String
+  type            String   // PATENT, PAPER, SW, IDEA
+  status          String   // IDEA, FILED, REGISTERED, REJECTED, ABANDONED
+  
+  applicationNo   String?  @map("application_no")
+  applicationDate DateTime? @map("application_date")
+  registrationNo  String?  @map("registration_no")
+  registrationDate DateTime? @map("registration_date")
+  
+  inventors       Json?    // Array of { name, share }
+  rewardInfo      Json?    @map("reward_info")
+  documents       Json?    // ECM Links
+  
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt      @map("updated_at")
+
+  @@map("RND_IP")
+}
+
+model RndComplianceChecklist {
+  id              Int      @id @default(autoincrement())
+  projectId       String   @map("project_id")
+  stage           String   // INITIATION, EXECUTION, CLOSING
+  itemName        String   @map("item_name")
+  isRequired      Boolean  @default(true) @map("is_required")
+  isSubmitted     Boolean  @default(false) @map("is_submitted")
+  ecmLink         String?  @map("ecm_link")
+  submittedDate   DateTime? @map("submitted_date")
+  
+  project         RndProject @relation(fields: [projectId], references: [id])
+
+  @@map("RND_COMPLIANCE_CHECKLIST")
+}
+
+model RndAnalysisRequest {
+  id              Int      @id @default(autoincrement())
+  projectId       String?  @map("project_id")
+  requesterId     Int      @map("requester_id")
+  sampleName      String   @map("sample_name")
+  analysisType    String   @map("analysis_type")
+  desiredDate     DateTime? @map("desired_date")
+  status          String   @default("REQUESTED") // REQUESTED, PROCESSING, COMPLETED
+  resultReportLink String? @map("result_report_link")
+  rawDataLink     String?  @map("raw_data_link")
+  
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt      @map("updated_at")
+
+  project         RndProject? @relation(fields: [projectId], references: [id])
+  requester       User        @relation(fields: [requesterId], references: [id])
+
+  @@map("RND_ANALYSIS_REQUESTS")
+}
