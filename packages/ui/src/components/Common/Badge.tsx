@@ -10,12 +10,12 @@ interface BadgeProps {
 }
 
 const variantClasses: Record<BadgeVariant, string> = {
-  default: 'bg-primary-100 text-primary-700',
-  success: 'bg-green-100 text-green-700',
-  warning: 'bg-yellow-100 text-yellow-700',
-  danger: 'bg-red-100 text-red-700',
-  info: 'bg-blue-100 text-blue-700',
-  neutral: 'bg-neutral-100 text-neutral-700',
+  default: 'bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-700/10',
+  success: 'bg-success-50 text-success-700 ring-1 ring-inset ring-success-600/20',
+  warning: 'bg-warning-50 text-warning-700 ring-1 ring-inset ring-warning-600/20',
+  danger: 'bg-error-50 text-error-700 ring-1 ring-inset ring-error-600/10',
+  info: 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-700/10',
+  neutral: 'bg-neutral-50 text-neutral-600 ring-1 ring-inset ring-neutral-500/10',
 };
 
 const sizeClasses: Record<'sm' | 'md' | 'lg', string> = {

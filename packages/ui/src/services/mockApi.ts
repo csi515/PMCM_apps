@@ -54,11 +54,11 @@ class MockApiService {
   // 사용자 관리
   async getUsers(): Promise<ApiResponse<User[]>> {
     const data = this.getData();
-    return { 
+    return {
       data: (data.users || []).map((u: any) => {
         const { password: _, ...user } = u;
         return user as User;
-      }) 
+      })
     };
   }
 
@@ -77,7 +77,7 @@ class MockApiService {
     return { data: userWithoutPassword as User };
   }
 
-  async deleteUser(userId: number): Promise<ApiResponse<void>> {
+  async deleteUser(_userId: number): Promise<ApiResponse<void>> {
     return { data: undefined };
   }
 
@@ -120,7 +120,7 @@ class MockApiService {
     return { data: updatedItem };
   }
 
-  async deleteDFMEA(id: number): Promise<ApiResponse<void>> {
+  async deleteDFMEA(_id: number): Promise<ApiResponse<void>> {
     return { data: undefined };
   }
 
@@ -215,7 +215,7 @@ class MockApiService {
     return { data: notifications };
   }
 
-  async markNotificationAsRead(id: number): Promise<ApiResponse<void>> {
+  async markNotificationAsRead(_id: number): Promise<ApiResponse<void>> {
     return { data: undefined };
   }
 
@@ -257,7 +257,7 @@ class MockApiService {
     return { data: updatedComment };
   }
 
-  async deleteComment(id: number): Promise<ApiResponse<void>> {
+  async deleteComment(_id: number): Promise<ApiResponse<void>> {
     return { data: undefined };
   }
 

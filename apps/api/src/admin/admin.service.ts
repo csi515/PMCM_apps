@@ -1,26 +1,30 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Injectable } from '@nestjs/common';
+import { DataService } from '../data/data.service';
 import * as bcrypt from 'bcryptjs';
+import { BulkRegisterUserDto, BulkRegisterResultDto } from '../common/dto';
+import { Role } from '../data/types';
 
 @Injectable()
 export class AdminService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private dataService: DataService) {}
 
-  async bulkRegisterUsers(users: any[]) {
-    const results = {
+  async bulkRegisterUsers(
+    users: BulkRegisterUserDto[],
+  ): Promise<BulkRegisterResultDto> {
+    const results: BulkRegisterResultDto = {
       success: 0,
       failed: 0,
       errors: [],
     };
 
-    // Transaction? Or process one by one to report errors?
-    // Requirement says: "중복된 사번이 있을 경우 해당 건은 스킵하거나 에러 리포트 반환"
-    // Using transaction for all or nothing might be too strict if one fails.
-    // Let's try individual for feedback or bulkMany for performance if no validation needed contextually.
-    // But we need to hash passwords. createMany doesn't support custom logic per row easily in one go unless pre-processed.
-
-    // 1. Pre-process to hash passwords
-    const usersToCreate = [];
+    const usersToCreate: Array<{
+      username: string;
+      name: string;
+      deptCode: string;
+      birthDate: string;
+      password: string;
+      role: Role;
+    }> = [];
 
     for (const user of users) {
       if (!user.username || !user.name || !user.birthDate) {
@@ -30,9 +34,7 @@ export class AdminService {
       }
 
       // Check existence
-      const exists = await this.prisma.user.findUnique({
-        where: { username: user.username },
-      });
+      const exists = await this.dataService.findUserByUsername(user.username);
       if (exists) {
         results.failed++;
         results.errors.push(`User ${user.username} already exists`);
@@ -48,16 +50,13 @@ export class AdminService {
         deptCode: user.deptCode || 'UNKNOWN',
         birthDate: user.birthDate,
         password: hashedPassword,
-        role: user.role || 'USER',
+        role: (user.role || 'USER') as Role,
       });
     }
 
     if (usersToCreate.length > 0) {
-      await this.prisma.user.createMany({
-        data: usersToCreate,
-        skipDuplicates: true, // Safety net
-      });
-      results.success += usersToCreate.length;
+      const created = await this.dataService.createManyUsers(usersToCreate);
+      results.success += created;
     }
 
     return results;

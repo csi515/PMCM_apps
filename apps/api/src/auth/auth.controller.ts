@@ -1,15 +1,21 @@
-import { Controller, Post, UseGuards, Request, Response } from '@nestjs/common';
+import { Controller, Post, UseGuards, Req, Res } from '@nestjs/common';
+import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
+import { UserDto } from '../common/dto';
+
+interface RequestWithUser extends Request {
+  user: UserDto;
+}
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService) { }
 
   @UseGuards(AuthGuard('local'))
   @Post('login')
-  async login(@Request() req, @Response() res) {
-    const { access_token } = await this.authService.login(req.user);
+  login(@Req() req: RequestWithUser, @Res() res: Response) {
+    const { access_token } = this.authService.login(req.user);
 
     // Cookie Setting as per requirements
     res.cookie('access_token', access_token, {
@@ -23,7 +29,7 @@ export class AuthController {
   }
 
   @Post('logout')
-  async logout(@Response() res) {
+  logout(@Res() res: Response) {
     res.clearCookie('access_token', { path: '/' });
     return res.send({ message: 'Logout successful' });
   }

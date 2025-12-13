@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
+import RndDemoPage from './pages/RndDemoPage';
 
 function App() {
     return (
@@ -9,7 +10,8 @@ function App() {
                     Admin Dashboard Setup
                 </h1>
                 <Routes>
-                    {/* Define admin routes here */}
+                    <Route path="/" element={<RndDemoPage />} />
+                    <Route path="/rnd-demo" element={<RndDemoPage />} />
                 </Routes>
             </div>
             <Toaster position="top-right" />

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useApp } from '../../contexts/AppContext';
+import { useApp } from '@repo/ui';
+import { Button } from '@repo/ui';
 import { Bell, Mail, Smartphone, Save } from 'lucide-react';
 
 function NotificationSettings() {
@@ -126,10 +127,10 @@ function NotificationSettings() {
       </div>
 
       <div className="flex justify-end">
-        <button onClick={handleSave} className="btn-primary flex items-center gap-2">
-          <Save className="w-4 h-4" />
+        <Button onClick={handleSave} className="flex items-center gap-2">
+          <Save className="w-4 h-4 mr-2" />
           설정 저장
-        </button>
+        </Button>
       </div>
     </div>
   );

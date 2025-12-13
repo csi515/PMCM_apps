@@ -1,29 +1,23 @@
 import { useState } from 'react';
-import { useApp, Badge, DataTable } from '@repo/ui';
-import { Users, Shield, UserCog, Search } from 'lucide-react';
+import { useApp, Badge } from '@repo/ui';
+import { UserCog, Search } from 'lucide-react';
 
 export default function UserManagement() {
-    const { users, dispatch } = useApp();
+    const { users, updateUser } = useApp();
     const [searchTerm, setSearchTerm] = useState('');
 
     const filteredUsers = users.filter(user =>
         user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (user.username?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
         user.department.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const handleRoleChange = (userId: number, newRole: 'ADMIN' | 'APPROVER' | 'USER') => {
-        dispatch({
-            type: 'UPDATE_USER',
-            payload: { id: userId, role: newRole }
-        });
+        updateUser({ id: userId, role: newRole });
     };
 
     const handleHeadChange = (userId: number, isHead: boolean) => {
-        dispatch({
-            type: 'UPDATE_USER',
-            payload: { id: userId, isDepartmentHead: isHead }
-        });
+        updateUser({ id: userId, isDepartmentHead: isHead });
     };
 
     return (
@@ -69,7 +63,7 @@ export default function UserManagement() {
                                         </div>
                                         <div>
                                             <div className="font-medium text-gray-900">{user.name}</div>
-                                            <div className="text-sm text-gray-500">{user.username}</div>
+                                            <div className="text-sm text-gray-500">{user.username || user.employeeId}</div>
                                         </div>
                                     </div>
                                 </td>
@@ -80,7 +74,7 @@ export default function UserManagement() {
                                 <td className="px-6 py-4">
                                     <select
                                         value={user.role}
-                                        onChange={(e) => handleRoleChange(user.id, e.target.value as any)}
+                                        onChange={(e) => handleRoleChange(user.id, e.target.value as 'ADMIN' | 'APPROVER' | 'USER')}
                                         className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-1 border"
                                     >
                                         <option value="USER">User</option>
@@ -100,7 +94,7 @@ export default function UserManagement() {
                                     </label>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <Badge variant={user.role === 'ADMIN' ? 'error' : user.role === 'APPROVER' ? 'warning' : 'success'}>
+                                    <Badge variant={user.role === 'ADMIN' ? 'danger' : user.role === 'APPROVER' ? 'warning' : 'success'}>
                                         Active
                                     </Badge>
                                 </td>

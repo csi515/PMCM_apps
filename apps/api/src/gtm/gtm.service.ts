@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class GtmService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   // 1. Goal Alignment (Tree View)
   async getGoalsTree(year: number) {
@@ -115,14 +115,14 @@ export class GtmService {
       },
     });
 
-    const doneTasks = tasks.filter((t) => t.status === 'DONE');
-    const inProgressTasks = tasks.filter((t) => t.status === 'IN_PROGRESS');
+    const doneTasks = tasks.filter((t: any) => t.status === 'DONE');
+    const inProgressTasks = tasks.filter((t: any) => t.status === 'IN_PROGRESS');
 
     const achievements =
-      doneTasks.map((t) => `- [Completed] ${t.taskName}`).join('\n') +
+      doneTasks.map((t: any) => `- [Completed] ${t.taskName}`).join('\n') +
       '\n' +
       inProgressTasks
-        .map((t) => `- [In Progress] ${t.taskName} (${t.progress}%)`)
+        .map((t: any) => `- [In Progress] ${t.taskName} (${t.progress}%)`)
         .join('\n');
 
     // Find tasks starting next week
@@ -141,7 +141,7 @@ export class GtmService {
 
     const plans = plannedTasks
       .map(
-        (t) =>
+        (t: any) =>
           `- [Planned] ${t.taskName} (Due: ${t.endDate.toISOString().split('T')[0]})`,
       )
       .join('\n');

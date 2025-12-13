@@ -3,6 +3,8 @@ import { useApp } from '../../contexts/AppContext';
 import { Upload, Download, FileSpreadsheet } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { exportToExcel } from '../../utils/reportGenerator';
+import Button, { buttonVariants } from './Button';
+import { cn } from '../../utils';
 
 function DataImportExport() {
   const { dfmea, addDFMEA, users } = useApp();
@@ -39,10 +41,10 @@ function DataImportExport() {
 
         let importedCount = 0;
         jsonData.forEach((row: any) => {
-          const rpn = (row['심각도(S)'] || row['S'] || 1) * 
-                     (row['발생도(O)'] || row['O'] || 1) * 
-                     (row['탐지도(D)'] || row['D'] || 1);
-          
+          const rpn = (row['심각도(S)'] || row['S'] || 1) *
+            (row['발생도(O)'] || row['O'] || 1) *
+            (row['탐지도(D)'] || row['D'] || 1);
+
           addDFMEA({
             failureMode: row['고장모드'] || row['Failure Mode'] || '',
             effect: row['영향'] || row['Effect'] || '',
@@ -84,10 +86,10 @@ function DataImportExport() {
           <p className="text-sm text-neutral-600 mb-4">
             현재 DFMEA 데이터를 Excel 형식으로 내보냅니다.
           </p>
-          <button onClick={handleExport} className="btn-primary flex items-center gap-2 w-full">
-            <FileSpreadsheet className="w-4 h-4" />
+          <Button onClick={handleExport} className="w-full">
+            <FileSpreadsheet className="w-4 h-4 mr-2" />
             Excel로 내보내기
-          </button>
+          </Button>
         </div>
 
         {/* 가져오기 */}
@@ -99,8 +101,8 @@ function DataImportExport() {
           <p className="text-sm text-neutral-600 mb-4">
             Excel 파일에서 DFMEA 데이터를 가져옵니다.
           </p>
-          <label className="btn-primary flex items-center gap-2 w-full cursor-pointer">
-            <Upload className="w-4 h-4" />
+          <label className={cn(buttonVariants({ variant: 'primary' }), "w-full cursor-pointer")}>
+            <Upload className="w-4 h-4 mr-2" />
             Excel 파일 선택
             <input
               type="file"
@@ -116,9 +118,8 @@ function DataImportExport() {
       </div>
 
       {importStatus && (
-        <div className={`card ${
-          importStatus.includes('오류') ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'
-        }`}>
+        <div className={`card ${importStatus.includes('오류') ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'
+          }`}>
           <p className={importStatus.includes('오류') ? 'text-red-700' : 'text-green-700'}>
             {importStatus}
           </p>

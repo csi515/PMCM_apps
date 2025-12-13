@@ -2,12 +2,12 @@ import {
   Controller,
   Post,
   Body,
-  UseGuards,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
-import { AuthGuard } from '@nestjs/passport';
+import { BulkRegisterUserDto } from '../common/dto';
+// import { AuthGuard } from '@nestjs/passport';
 // import { RolesGuard } from '../auth/roles.guard'; // TODO
 // import { Roles } from '../auth/roles.decorator';
 
@@ -18,7 +18,7 @@ export class AdminController {
 
   @Post('users/bulk')
   // @Roles('ADMIN')
-  async bulkRegisterUsers(@Body() users: any[]) {
+  async bulkRegisterUsers(@Body() users: BulkRegisterUserDto[]) {
     if (!Array.isArray(users)) {
       throw new HttpException('Input must be an array', HttpStatus.BAD_REQUEST);
     }

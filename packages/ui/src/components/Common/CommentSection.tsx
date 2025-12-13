@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { Send, Edit2, Trash2, MessageSquare } from 'lucide-react';
+import Button from './Button';
 
 interface CommentSectionProps {
   entityType: 'DFMEA' | 'PFMEA' | 'PPAP' | 'ECR' | 'QUALITY_ISSUE';
@@ -159,14 +160,13 @@ function CommentSection({ entityType, entityId }: CommentSectionProps) {
           <p className="text-xs text-neutral-500">
             @이름을 입력하여 특정 사용자를 멘션할 수 있습니다.
           </p>
-          <button
+          <Button
             type="submit"
-            className="btn-primary flex items-center gap-2"
             disabled={!newComment.trim()}
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-4 h-4 mr-2" />
             등록
-          </button>
+          </Button>
         </div>
       </form>
     </div>

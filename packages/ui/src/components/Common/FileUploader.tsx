@@ -1,6 +1,6 @@
-import React, { useRef, useState, DragEvent, ChangeEvent } from 'react';
+import { useRef, useState, DragEvent, ChangeEvent } from 'react';
 import { Upload, X, File, FileText, Image, Film, Music, AlertCircle } from 'lucide-react';
-import Badge from './Badge';
+
 
 export interface FileData {
     file: File;

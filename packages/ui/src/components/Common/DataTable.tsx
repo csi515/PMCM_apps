@@ -1,4 +1,4 @@
-import React, { ReactNode, useState, useMemo } from 'react';
+import { ReactNode, useState, useMemo } from 'react';
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search } from 'lucide-react';
 
 export interface Column<T> {

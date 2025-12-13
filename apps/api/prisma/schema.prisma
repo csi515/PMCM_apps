@@ -30,8 +30,12 @@ model User {
 
   // Relations
   gtmTasks  GtmTask[] @relation("Assignee")
+  gtmWeeklyReports GtmWeeklyReport[]
   rndLogs   RndEquipmentUsageLog[]
+  rndHazardousLogs RndHazardousLog[]
+  rndAnalysisRequests RndAnalysisRequest[]
   managedEquipments RndEquipment[] @relation("EquipmentManager")
+  managedSafetyDocs RndSafetyDoc[]
 
   @@map("SYS_Users")
 }
@@ -379,4 +383,204 @@ model RndAnalysisRequest {
   requester       User        @relation(fields: [requesterId], references: [id])
 
   @@map("RND_ANALYSIS_REQUESTS")
+}
+
+// ------------------------------------------------------
+// QMS Plugin (Quality Management System)
+// ------------------------------------------------------
+
+model QmsVoc {
+  id            Int      @id @default(autoincrement())
+  vocNo         String   @unique @map("voc_no") // VOC-YYYY-MM-NNN
+  title         String
+  description   String?  @db.Text
+  type          String   // COMPLAINT, INQUIRY, SUGGESTION
+  customer      String
+  product       String?
+  status        String   @default("RECEIVED") // RECEIVED, ANALYZING, ACTION, VERIFIED, CLOSED
+  
+  // Relations
+  qualityIssues QmsQualityIssue[]
+
+  // Audit
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt      @map("updated_at")
+  createdBy     Int?     @map("created_by")
+  updatedBy     Int?     @map("updated_by")
+  isDeleted     Boolean  @default(false) @map("is_deleted")
+
+  @@map("QMS_VOC")
+}
+
+model QmsQualityIssue {
+  id            Int      @id @default(autoincrement())
+  issueNo       String   @unique @map("issue_no")
+  title         String
+  description   String?  @db.Text
+  status        String   @default("OPEN")
+  processStep   String   @default("D0") @map("process_step") // D0..D8
+  
+  // Links
+  vocId         Int?     @map("voc_id")
+  voc           QmsVoc?  @relation(fields: [vocId], references: [id])
+
+  // 8D Report Fields (simplified for schema, can be JSON or separate tables if complex)
+  d0Containment String?  @map("d0_containment") @db.Text
+  d1Team        Json?    @map("d1_team") // Array of User IDs
+  d2Problem     String?  @map("d2_problem") @db.Text
+  d3Interim     String?  @map("d3_interim") @db.Text
+  d4RootCause   String?  @map("d4_root_cause") @db.Text
+  d5Corrective  String?  @map("d5_corrective") @db.Text
+  d6Implement   String?  @map("d6_implement") @db.Text
+  d7Prevent     String?  @map("d7_prevent") @db.Text
+  d8Congrat     String?  @map("d8_congrat") @db.Text
+
+  // Audit
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt      @map("updated_at")
+  createdBy     Int?     @map("created_by")
+  updatedBy     Int?     @map("updated_by")
+  isDeleted     Boolean  @default(false) @map("is_deleted")
+
+  @@map("QMS_QUALITY_ISSUES")
+}
+
+model QmsFmea {
+  id            Int      @id @default(autoincrement())
+  fmeaNo        String   @unique @map("fmea_no")
+  title         String
+  partName      String?  @map("part_name")
+  partNumber    String?  @map("part_number")
+  revision      String   @default("1")
+  
+  items         QmsFmeaItem[]
+
+  // Audit
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt      @map("updated_at")
+  createdBy     Int?     @map("created_by")
+  updatedBy     Int?     @map("updated_by")
+  isDeleted     Boolean  @default(false) @map("is_deleted")
+
+  @@map("QMS_FMEA")
+}
+
+model QmsFmeaItem {
+  id            Int      @id @default(autoincrement())
+  fmeaId        Int      @map("fmea_id")
+  processFunction String @map("process_function")
+  failureMode   String   @map("failure_mode")
+  effect        String
+  cause         String
+  
+  severity      Int
+  occurrence    Int
+  detection     Int
+  rpn           Int      // Calculated
+
+  recommendation String?
+  
+  fmea          QmsFmea  @relation(fields: [fmeaId], references: [id])
+  
+  @@map("QMS_FMEA_ITEMS")
+}
+
+model QmsPpap {
+  id            Int      @id @default(autoincrement())
+  title         String
+  customer      String
+  submissionLevel Int    @map("submission_level") // 1..5
+  status        String   @default("DRAFT") // DRAFT, SUBMITTED, APPROVED, REJECTED
+  
+  documents     QmsPpapDocument[]
+
+  // Audit
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt      @map("updated_at")
+  createdBy     Int?     @map("created_by")
+  updatedBy     Int?     @map("updated_by")
+  isDeleted     Boolean  @default(false) @map("is_deleted")
+
+  @@map("QMS_PPAP")
+}
+
+model QmsPpapDocument {
+  id            Int      @id @default(autoincrement())
+  ppapId        Int      @map("ppap_id")
+  docType       String   @map("doc_type") // PSW, FMEA, CP, DRAWING
+  fileUrl       String   @map("file_url")
+  status        String   @default("PENDING")
+
+  ppap          QmsPpap  @relation(fields: [ppapId], references: [id])
+
+  @@map("QMS_PPAP_DOCUMENTS")
+}
+
+model QmsStandardLibrary {
+  id            Int      @id @default(autoincrement())
+  category      String   // FAILURE_MODE, CAUSE, EFFECT, CONTROL
+  code          String   @unique
+  name          String
+  nameJa        String?  @map("name_ja")
+  description   String?
+
+  @@map("QMS_STANDARD_LIBRARY")
+}
+
+model QmsSpcChart {
+  id            Int      @id @default(autoincrement())
+  code          String   @unique
+  title         String
+  nominal       Float?
+  usl           Float?   @map("usl")
+  lsl           Float?   @map("lsl")
+  ucl           Float?   @map("ucl") // Calculated Control Limit (optional storage)
+  lcl           Float?   @map("lcl") // Calculated Control Limit (optional storage)
+  
+  dataPoints    QmsSpcData[]
+
+  // Audit
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt      @map("updated_at")
+
+  @@map("QMS_SPC_CHARTS")
+}
+
+model QmsSpcData {
+  id            Int      @id @default(autoincrement())
+  chartId       Int      @map("chart_id")
+  value         Float
+  measuredAt    DateTime @default(now()) @map("measured_at")
+  
+  chart         QmsSpcChart @relation(fields: [chartId], references: [id])
+
+  @@map("QMS_SPC_DATA")
+}
+
+model QmsNotification {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  title     String
+  message   String
+  type      String   // info, warning, error, success
+  isRead    Boolean  @default(false) @map("is_read")
+  relatedEntityId   Int?     @map("related_entity_id") // ID of the related object (e.g., Issue ID)
+  relatedEntityType String?  @map("related_entity_type") // e.g., 'ISSUE', 'PPAP'
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("QMS_NOTIFICATIONS")
+}
+
+model QmsAuditLog {
+  id        Int      @id @default(autoincrement())
+  entityId    String   @map("entity_id") // ID as string to be generic
+  entityType  String   @map("entity_type") // e.g. 'ISSUE', 'PPAP'
+  action      String   // CREATE, UPDATE, DELETE, APPROVE
+  userId      Int      @map("user_id") 
+  details     Json?    // Changed fields or snapshot
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("QMS_AUDIT_LOGS")
 }

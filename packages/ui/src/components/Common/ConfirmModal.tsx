@@ -1,5 +1,6 @@
 import { AlertTriangle, CheckCircle, Info, XCircle } from 'lucide-react';
 import Modal from './Modal';
+import Button from './Button';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -72,20 +73,22 @@ function ConfirmModal({
       </div>
 
       <div className="flex gap-3">
-        <button
+        <Button
+          variant="secondary"
           onClick={onClose}
-          className="btn-secondary flex-1"
+          className="flex-1"
           disabled={isLoading}
         >
           {cancelText}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant={variant === 'danger' ? 'danger' : 'primary'}
           onClick={handleConfirm}
-          className={`btn-primary flex-1 ${config.confirmButton} text-white`}
+          className={`flex-1 ${variant === 'danger' ? '' : config.confirmButton}`}
           disabled={isLoading}
         >
           {isLoading ? '처리 중...' : confirmText}
-        </button>
+        </Button>
       </div>
     </Modal>
   );
